@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+build/
+dist/
+out/
+
+# Cache
+.cache/
+.npm/
+.yarn/
+
+# Logs
+*.log
+logs/
+
+# IDE files (exclude these)
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files (exclude these)
+.DS_Store
+Thumbs.db
+
+# Database files
+*.db
+*.sqlite
+
+# Secrets
+*.key
+*.pem
+config/secrets.json
