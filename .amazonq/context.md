@@ -2,6 +2,20 @@
 
 ---
 
+## Rules for Amazon Q Agents
+- **Precedence:** **Business Rules** override **User Stories**; **User Stories** override **Examples**.
+  - If you see a conflict, follow that order and cite the section you used.
+
+- **Unit tests are mandatory:** For every code change you propose, include unit tests that cover:
+  - happy path, key edge cases, and error handling
+  - auth/permission checks (if relevant)
+  - state/status transitions (if relevant)
+
+- **Development-only scope:** All outputs are for **development/demo**, not production.
+  - Prefer sandbox endpoints; **never** hit live services or real charges.
+
+---
+
 ## Project Overview
 
 **Parcel.ai** is an on-demand parcel delivery platform that connects customers who need items delivered with nearby drivers. The platform provides real-time tracking, secure payments, and a seamless experience across mobile and web interfaces.
@@ -388,7 +402,7 @@
 ### Frontend
 - Built with **React Native and Expo** for cross-platform support (iOS, Android, Web)
 - Styled using **NativeWind**, enabling Tailwind-style utility classes and smooth animation support
-- Uses **Axios** for API communication and **React Router DOM** for web navigation (if applicable)
+- Uses **Axios** for API communication
 
 ### Backend
 - Developed with **Node.js** and **Express**
@@ -428,7 +442,7 @@
 - **Business Logic:** Booking lifecycle, dispatch algorithm, payment processing
 - **Real-time Communication:** Socket.IO server for live tracking and notifications
 - **Database Operations:** PostgreSQL queries with TypeORM/Prisma for type safety
-- **File Management:** Persistent volume mounted file uploads with multer
+- **File Management:** AWS S3
 - **External Integrations:** Stripe payments, Google Maps, push notifications
 - **PDF Generation:** Receipt generation using puppeteer
 - **Container Management:** Dockerized service with health checks and resource limits
