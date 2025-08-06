@@ -103,7 +103,18 @@
 - On save, driver status becomes "active"
 - Incomplete signup blocks job acceptance
 
-### US-08: Receive & Accept Job (First-Acceptor-Wins)
+### US-08: Mobile-Optimized Field Operations
+
+**As a** delivery driver  
+**I want to** access and update job information on my mobile device with touch-friendly interactions  
+**So that** I can efficiently manage deliveries while on the road without desktop dependency
+
+**Acceptance Criteria:**
+- Responsive design optimized for mobile screens
+- Touch-friendly buttons and forms
+- Fast loading performance for field use
+
+### US-09: Receive & Accept Job (First-Acceptor-Wins)
 
 **As a** driver  
 **I want to** receive nearby job offers with payout info and accept the one I want  
@@ -114,7 +125,7 @@
 - Job card shows pickup, drop-off, payout
 - First driver to tap "Accept" is assigned; others see "Job taken"
 
-### US-09: Dispatch Fan-Out (System)
+### US-10: Dispatch Fan-Out (System)
 
 **As the** system  
 **I want to** broadcast a new job to drivers in expanding radius with light rating bias  
@@ -125,7 +136,17 @@
 - Radius expands every n seconds until timeout
 - Job is withdrawn after timeout if unclaimed
 
-### US-10: Live Map & ETA
+## US-11: Real-Time Status Tracking
+
+**As an** operations manager
+**I want** to track and update job status in real-time through the complete delivery lifecycle
+**So that** I can maintain visibility into operations and provide accurate updates to customers
+
+**Acceptance Criteria:**
+- Visual progress indicators showing completion percentage
+- Ability to mark jobs as cancelled from any status
+
+### US-12: Live Map & ETA
 
 **As a** user  
 **I want to** see the driver's live location and ETA  
@@ -137,7 +158,7 @@
 - ETA recalculates dynamically every few seconds as driver moves
 - User can share a read-only tracking link
 
-### US-11: Photo Proof – Pickup & Drop-off
+### US-13: Photo Proof – Pickup & Drop-off
 
 **As a** driver  
 **I want to** take a photo of the parcel at pickup and drop-off  
@@ -150,7 +171,7 @@
 - Photos are visible in booking detail for user & operator
 - Status transitions are blocked until required photos are uploaded
 
-### US-12: Capture Payment & Send Receipt
+### US-14: Capture Payment & Send Receipt
 
 **As the** system  
 **I want to** capture the held payment when the booking status changes to "delivered" and send a receipt  
@@ -162,7 +183,7 @@
 - On capture failure, booking marked "Payment failed" with retry option
 - Email & in-app receipt sent within 1 min of successful capture
 
-### US-13: Daily Driver Payout
+### US-15: Daily Driver Payout
 
 **As the** system  
 **I want to** aggregate each driver's earnings daily and initiate payout  
@@ -173,7 +194,7 @@
 - Driver sees pending and paid amounts in Earnings screen
 - Payouts processed on business days (weekends/holidays processed next business day)
 
-### US-14: Rating Flow
+### US-16: Rating Flow
 
 **As a** user  
 **I want to** rate the driver after delivery  
@@ -183,7 +204,7 @@
 - 1-5 star modal appears after job completion
 - Rating is optional but can't be edited after submission
 
-### US-15: Booking History & Receipt Download
+### US-17: Booking History & Receipt Download
 
 **As a** user  
 **I want to** view my past bookings and download receipts  
@@ -192,7 +213,7 @@
 **Acceptance Criteria:**
 - History list paginated; each item opens detail view and receipt PDF link
 
-### US-16: Driver Earnings & Job History
+### US-18: Driver Earnings & Job History
 
 **As a** driver  
 **I want to** see my completed jobs and total earnings  
@@ -201,7 +222,7 @@
 **Acceptance Criteria:**
 - Earnings summary (today, week, month) + list of jobs
 
-### US-17: In-App Support Ticket
+### US-19: In-App Support Ticket
 
 **As a** user  
 **I want to** open a support ticket for my booking and see replies  
@@ -214,7 +235,7 @@
 - Push notification on reply
 - Photo upload retries automatically if failed
 
-### US-18: Operator Management Interface
+### US-20: Operator Management Interface
 
 **As an** operator  
 **I want to** search bookings, view driver list, and suspend/reactivate drivers  
@@ -224,7 +245,7 @@
 - Search by booking ID, customer, driver
 - Driver status toggle (active/suspended) reflects immediately in app
 
-### US-19: Configure Commission & Tax Rates
+### US-21: Configure Commission & Tax Rates
 
 **As an** operator  
 **I want to** set commission percentages, applicable taxes, base fare parameters, and system currency  
@@ -236,6 +257,17 @@
 - Changes apply only to new bookings created after the update
 - Validation ensures numeric ranges and prevents negative values
 - Currency changes affect all new transactions system-wide
+
+### US-22: Operational Dashboard & Analytics
+
+**As a** business owner  
+**I want to** view job statistics and performance metrics through an interactive dashboard  
+**So that** I can make data-driven decisions about my delivery operations
+
+**Acceptance Criteria:**
+- Animated counters showing job statistics by status
+- Visual progress tracking across all active jobs
+- Color-coded sections for different job types and statuses
 
 ---
 
@@ -351,92 +383,32 @@
 
 ---
 
+## Technology Stack
+
+### Frontend
+- Built with **React Native and Expo** for cross-platform support (iOS, Android, Web)
+- Styled using **NativeWind**, enabling Tailwind-style utility classes and smooth animation support
+- Uses **Axios** for API communication and **React Router DOM** for web navigation (if applicable)
+
+### Backend
+- Developed with **Node.js** and **Express**
+- Written in **TypeScript** for strong typing and developer productivity
+- Designed for rapid development and scalable API architecture
+
+### Database
+- **PostgreSQL** with **PostGIS extension** for advanced geospatial queries (e.g., delivery radius, driver proximity)
+
+### Real-time
+- **Socket.IO** for real-time communication: live tracking, push notifications, and job dispatch updates
+
+### Infrastructure
+- Targeted for deployment on **AWS Cloud**, leveraging **Kubernetes (EKS)** for container orchestration
+- Designed for scalability, fault tolerance, and ease of deployment in cloud-native environments
+
+### CI/CD
+- **CI/CD**: Git-based automation using GitHub Actions or GitLab CI for testing, container builds, and deployments to AWS
+
 ## Technical Architecture
-
-### Technology Stack
-- **Frontend:** React Native with Expo for cross-platform mobile app (iOS, Android, Web)
-- **Backend:** Node.js with Express and TypeScript for type safety and rapid development
-- **Database:** PostgreSQL with PostGIS extension for geospatial features (running in Kubernetes)
-- **Real-time:** Socket.IO for WebSocket connections (live tracking, notifications, job dispatch)
-- **Development Tools:** Local Kubernetes cluster (minikube/kind) with persistent volumes, local Docker registry, nodemon for hot reload, ts-node for TypeScript execution
-
-### System Architecture Overview
-- **Microservices in Kubernetes** with service discovery and load balancing
-- Multiple services running in local Kubernetes cluster with persistent storage
-- Shared PostgreSQL database with persistent volumes for data retention
-- Built-in Socket.IO server for real-time features
-- RESTful API design with TypeScript interfaces
-- Local Docker registry for custom images and rapid development iteration
-
-### Project Structure
-```
-parcel-ai/
-├── backend/
-│   ├── src/
-│   │   ├── app.ts                 # Main Express application setup
-│   │   ├── server.ts              # Server startup and Socket.IO configuration
-│   │   ├── config/                # Database and environment configuration
-│   │   │   ├── database.ts        # PostgreSQL connection setup
-│   │   │   └── environment.ts     # Environment variables
-│   │   ├── routes/                # API route handlers organized by feature
-│   │   │   ├── auth.ts            # Authentication routes
-│   │   │   ├── bookings.ts        # Booking management routes
-│   │   │   ├── drivers.ts         # Driver management routes
-│   │   │   ├── payments.ts        # Payment processing routes
-│   │   │   └── support.ts         # Support ticket routes
-│   │   ├── services/              # Business logic layer
-│   │   │   ├── authService.ts     # Authentication logic
-│   │   │   ├── bookingService.ts  # Booking workflow logic
-│   │   │   ├── dispatchService.ts # Job dispatch and matching
-│   │   │   ├── paymentService.ts  # Stripe integration
-│   │   │   └── socketService.ts   # Real-time communication
-│   │   ├── models/                # Database models and schemas
-│   │   │   ├── User.ts
-│   │   │   ├── Booking.ts
-│   │   │   └── Driver.ts
-│   │   ├── middleware/            # Express middleware
-│   │   │   ├── auth.ts            # JWT authentication
-│   │   │   ├── validation.ts      # Request validation
-│   │   │   └── errorHandler.ts    # Error handling
-│   │   ├── utils/                 # Shared utilities and helpers
-│   │   └── types/                 # TypeScript type definitions
-│   ├── k8s/                       # Kubernetes manifests
-│   │   ├── namespace.yaml         # Development namespace
-│   │   ├── postgres/              # PostgreSQL deployment
-│   │   │   ├── deployment.yaml
-│   │   │   ├── service.yaml
-│   │   │   ├── pvc.yaml           # Persistent volume claim
-│   │   │   └── configmap.yaml
-│   │   ├── backend/               # Backend API deployment
-│   │   │   ├── deployment.yaml
-│   │   │   ├── service.yaml
-│   │   │   └── configmap.yaml
-│   │   └── registry/              # Local Docker registry
-│   │       ├── deployment.yaml
-│   │       ├── service.yaml
-│   │       └── pvc.yaml
-│   ├── Dockerfile                 # Backend container image
-│   ├── uploads/                   # Local file storage (mounted volume)
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/
-│   ├── src/
-│   │   ├── screens/               # Role-based screen components
-│   │   ├── components/            # Reusable UI components
-│   │   ├── services/              # API calls and Socket.IO client
-│   │   ├── utils/                 # Frontend utilities
-│   │   └── types/                 # Shared TypeScript types
-│   ├── assets/                    # Images, fonts, etc.
-│   ├── Dockerfile                 # Frontend container image (for web)
-│   └── package.json
-├── shared/
-│   └── types/                     # Shared TypeScript interfaces
-├── scripts/
-│   ├── dev-setup.sh               # Development environment setup
-│   ├── build-images.sh            # Build and push to local registry
-│   └── deploy-dev.sh              # Deploy to local Kubernetes
-└── skaffold.yaml                  # Skaffold configuration for development
-```
 
 ### Frontend Responsibilities (React Native + Expo)
 - **User Interface:** Role-based views for Customer, Driver, and Operator
@@ -450,7 +422,7 @@ parcel-ai/
 - **Document Management:** PDF receipt viewing and download functionality
 - **History Management:** Paginated booking and earnings history with local caching
 
-### Backend Responsibilities (Express + TypeScript in Kubernetes)
+### Backend Responsibilities (Express + TypeScript)
 - **API Server:** RESTful endpoints for all business operations running as Kubernetes service
 - **Authentication:** JWT-based auth with Google/Apple OAuth integration
 - **Business Logic:** Booking lifecycle, dispatch algorithm, payment processing
@@ -461,64 +433,13 @@ parcel-ai/
 - **PDF Generation:** Receipt generation using puppeteer
 - **Container Management:** Dockerized service with health checks and resource limits
 
-### Communication Patterns
-- **REST APIs:** Express routes for all CRUD operations and business logic
-- **Socket.IO:** Real-time bidirectional communication for live features
-- **Kubernetes Services:** Service discovery and load balancing between components
-- **Persistent Storage:** PostgreSQL with persistent volumes for data retention
-- **Local Registry:** Custom Docker images stored in local Kubernetes registry
-- **Shared Types:** TypeScript interfaces used by both frontend and backend
-
 ### Third-party Integrations (Development Mode)
 - **Authentication:** Google Sign-In, Apple Sign-In (development credentials)
 - **Maps & Geolocation:** Google Maps Platform (development API key)
 - **Payments:** Stripe (test mode with test cards)
 - **Push Notifications:** Expo Push Notifications (development tokens)
-- **Image Storage:** Persistent volume storage with multer (mounted uploads/ directory)
+- **File Storage:** AWS S3 (development bucket for image uploads)
 - **PDF Generation:** Local PDF generation using puppeteer
-
-### Development Setup (Kubernetes Quick Start)
-```bash
-# Prerequisites: Install minikube, kubectl, and skaffold
-brew install minikube kubectl skaffold
-
-# Start local Kubernetes cluster
-minikube start --driver=docker --memory=4096 --cpus=2
-
-# Enable local Docker registry
-minikube addons enable registry
-
-# Setup development environment
-./scripts/dev-setup.sh           # Create namespace, setup registry, deploy PostgreSQL
-
-# Build and deploy services
-skaffold dev                     # Continuous development with hot reload
-
-# Alternative manual deployment
-./scripts/build-images.sh        # Build Docker images and push to local registry
-./scripts/deploy-dev.sh          # Deploy all services to Kubernetes
-
-# Frontend setup (runs locally, connects to Kubernetes services)
-cd frontend
-npm install
-npx expo start                   # Start Expo development server
-
-# Access services
-kubectl port-forward svc/backend-service 3000:3000    # Backend API
-kubectl port-forward svc/postgres-service 5432:5432  # Database (if needed)
-```
-
-### Development Benefits
-- **Kubernetes Native:** Develop with the same orchestration platform used in production
-- **Persistent Storage:** Database and file uploads persist across pod restarts
-- **Local Registry:** Fast image builds and deployments without external dependencies
-- **Service Discovery:** Kubernetes DNS for service-to-service communication
-- **Hot Reload:** Skaffold provides automatic rebuilds and redeployments on code changes
-- **Resource Management:** CPU and memory limits prevent resource exhaustion
-- **Health Checks:** Kubernetes liveness and readiness probes ensure service reliability
-- **Volume Mounts:** Shared persistent volumes for database and file storage
-- **Port Forwarding:** Easy access to services running in the cluster
-- **Scalability Testing:** Test horizontal scaling scenarios locally
 
 ### Database Schema Overview
 - **Core Entities:** Users, Drivers, Bookings, Payments, Support Tickets
@@ -933,70 +854,70 @@ GET    /users/bookings/{id}/receipt        # Download receipt PDF
 
 #### Driver Management
 ```
-POST /drivers/invite                   # Generate unique invite link (Operator only)
-GET  /drivers                          # Operator only
-PUT  /drivers/{id}/status              # Toggle between active/suspended (Operator only)
+POST /drivers/invite                       # Generate unique invite link (Operator only)
+GET  /drivers                              # Operator only
+PUT  /drivers/{id}/status                  # Toggle between active/suspended (Operator only)
 GET  /drivers/{id}/profile
 PUT  /drivers/{id}/profile
-GET  /drivers/{id}/earnings            # Earnings summary (today, week, month)
-GET  /drivers/{id}/earnings/history    # Detailed earnings history
-GET  /drivers/{id}/jobs/history        # Completed jobs list
-POST /drivers/{id}/location            # Real-time location update
+GET  /drivers/{id}/earnings                # Earnings summary (today, week, month)
+GET  /drivers/{id}/earnings/history        # Detailed earnings history
+GET  /drivers/{id}/jobs/history            # Completed jobs list
+POST /drivers/{id}/location                # Real-time location update
 ```
 
 #### Booking Service
 ```
-POST /bookings                         # Create booking (payment authorized when status becomes "assigned")
-GET  /bookings                         # List user's bookings
-GET  /bookings/{id}                    # Get booking details
-PUT  /bookings/{id}/cancel             # Cancel booking
-GET  /bookings/{id}/tracking           # Get tracking link
-POST /bookings/fare-estimate           # Get fare estimate
+POST /bookings                             # Create booking (payment authorized when status becomes "assigned")
+GET  /bookings                             # List user's bookings
+GET  /bookings/{id}                        # Get booking details
+PUT  /bookings/{id}/cancel                 # Cancel booking
+GET  /bookings/{id}/tracking               # Get tracking link
+POST /bookings/fare-estimate               # Get fare estimate
 ```
 
 #### Driver Job Management
 ```
-GET  /jobs/available                   # Get available jobs for driver
-POST /jobs/{id}/accept                 # Accept job
-PUT  /jobs/{id}/status                 # Update job status (validates photo requirements)
-POST /jobs/{id}/photos/pickup          # Upload pickup photo
-POST /jobs/{id}/photos/delivery        # Upload delivery photo
+GET  /jobs/available                       # Get available jobs for driver
+POST /jobs/{id}/accept                     # Accept job
+PUT  /jobs/{id}/status                     # Update job status (validates photo requirements)
+POST /jobs/{id}/photos/pickup              # Upload pickup photo
+POST /jobs/{id}/photos/delivery            # Upload delivery photo
 ```
 
 #### Payment Service
 ```
-POST /payments/authorize               # Authorize payment
-POST /payments/capture                 # Capture payment
-POST /payments/refund                  # Process refund
-GET  /payments/{id}/receipt            # Get receipt
+POST /payments/authorize                   # Authorize payment
+POST /payments/capture                     # Capture payment
+POST /payments/refund                      # Process refund
+GET  /payments/{id}/receipt                # Get receipt
 ```
 
 #### Support Service
 ```
-POST /support/tickets                  # Create support ticket
-GET  /support/tickets                  # List user's tickets
-GET  /support/tickets/{id}             # Get ticket details
-POST /support/tickets/{id}/messages    # Add message to ticket
-POST /support/tickets/{id}/attachments # Upload photo attachment
+POST /support/tickets                      # Create support ticket
+GET  /support/tickets                      # List user's tickets
+GET  /support/tickets/{id}                 # Get ticket details
+POST /support/tickets/{id}/messages        # Add message to ticket
+POST /support/tickets/{id}/attachments     # Upload photo attachment
 ```
 
 #### Rating Service
 ```
-POST /bookings/{id}/rating             # Submit rating
-GET  /drivers/{id}/ratings             # Get driver ratings
+POST /bookings/{id}/rating                 # Submit rating
+GET  /drivers/{id}/ratings                 # Get driver ratings
 ```
 
 #### Operator Management
 ```
-GET  /admin/bookings                   # Search bookings
-GET  /admin/drivers                    # List all drivers
-PUT  /admin/drivers/{id}/status        # Toggle between active/suspended
-GET  /admin/support/tickets            # List support tickets
-PUT  /admin/support/tickets/{id}/assign # Assign ticket to operator
-POST /admin/support/tickets/{id}/messages # Reply to ticket
-GET  /admin/bookings/{id}/photos       # Review pickup/delivery photos
-GET  /admin/config                     # Get system configuration
-PUT  /admin/config                     # Update rates and settings
+GET  /admin/bookings                       # Search bookings
+GET  /admin/drivers                        # List all drivers
+PUT  /admin/drivers/{id}/status            # Toggle between active/suspended
+GET  /admin/support/tickets                # List support tickets
+PUT  /admin/support/tickets/{id}/assign    # Assign ticket to operator
+POST /admin/support/tickets/{id}/messages  # Reply to ticket
+GET  /admin/bookings/{id}/photos           # Review pickup/delivery photos
+GET  /admin/config                         # Get system configuration
+PUT  /admin/config                         # Update rates and settings
 ```
 
 ### Detailed Endpoint Examples
