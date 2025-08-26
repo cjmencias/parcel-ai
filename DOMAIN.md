@@ -350,11 +350,15 @@
 ```json
 {
   "user_id": "uuid (FK to users.id)",
-  "status": "active | suspended",
+  "status": "pending | active | suspended",
   "vehicle_plate": "string",
+  "id_photo_url": "string",
+  "bank_info": "jsonb",
   "current_location": "point (PostGIS)",
   "rating_average": "decimal(2,1)",
-  "total_jobs": "integer"
+  "total_jobs": "integer",
+  "created_at": "timestamp",
+  "updated_at": "timestamp"
 }
 ```
 
@@ -369,15 +373,37 @@
   "dropoff_location": "point (PostGIS)",
   "dropoff_address": "string",
   "parcel_size": "small | medium | large",
-  "status": "pending | assigned | picked_up | delivered | completed | cancelled",
+  "status": "pending | assigned | picked_up | in_transit | delivered | completed | cancelled",
+  "assignment_type": "auto_dispatch | manual_assignment",
   "fare_amount": "decimal(10,2)",
+  "driver_amount": "decimal(10,2)",
+  "commission_amount": "decimal(10,2)",
+  "tax_amount": "decimal(10,2)",
   "estimated_distance_km": "decimal",
   "estimated_duration_minutes": "integer",
   "pickup_eta": "timestamp (nullable)",
   "delivery_eta": "timestamp (nullable)",
   "cancellation_reason": "string (nullable)",
   "created_at": "timestamp",
+  "assigned_at": "timestamp (nullable)",
+  "picked_up_at": "timestamp (nullable)",
+  "delivered_at": "timestamp (nullable)",
   "completed_at": "timestamp (nullable)"
+}
+```
+
+#### Pricing Configuration
+```json
+{
+  "id": "uuid",
+  "base_fare": "decimal(10,2)",
+  "per_km_rate": "decimal(10,2)",
+  "commission_percentage": "decimal(5,2)",
+  "tax_percentage": "decimal(5,2)",
+  "currency": "string",
+  "is_active": "boolean",
+  "created_at": "timestamp",
+  "created_by": "uuid (FK to users.id)"
 }
 ```
 
@@ -409,28 +435,34 @@
 
 #### Booking Status Flow
 ```
-pending → assigned → picked_up → delivered → completed
+pending → assigned → picked_up → in_transit → delivered → completed
    ↓         ↓
 cancelled ←──┘
 ```
 
-#### Driver Status
+#### Driver Status Flow
 ```
-active ⟷ suspended
+pending → active ⟷ suspended
+(operators register drivers as pending, then activate)
 (operators can toggle between active and suspended)
+```
+
+#### Assignment Types
+```
+auto_dispatch: Broadcast to nearby drivers (first-acceptor-wins)
+manual_assignment: Direct assignment to specific driver
 ```
 
 ### Key Relationships
 
 - **Users** (1) → (many) **Bookings** (as customer)
 - **Users** (1) → (many) **Bookings** (as driver)
-- **Bookings** (1) → (1) **Payments**
-- **Bookings** (1) → (many) **Driver Locations**
-- **Bookings** (1) → (1) **Ratings** (optional)
-- **Bookings** (1) → (many) **Support Tickets**
-- **Users** (1) → (many) **Payment Methods**
-- **Users** (1) → (many) **Driver Earnings** (for drivers)
-- **Support Tickets** (1) → (many) **Support Messages**
+- **Users** (1) → (1) **Drivers** (for driver role)
+- **Bookings** (1) → (many) **Driver Locations** (tracking history)
+- **Bookings** (1) → (1) **Ratings** (optional, post-completion)
+- **Drivers** (1) → (many) **Driver Locations** (location history)
+- **Pricing Configuration** (1) → (many) **Bookings** (fare calculation)
+- **Users** (1) → (many) **Pricing Configuration** (operators create rates)
 
 ### Indexes & Performance Considerations
 
@@ -438,10 +470,12 @@ active ⟷ suspended
 - `bookings.status` - For filtering active bookings
 - `bookings.customer_id, bookings.created_at` - Customer history
 - `bookings.driver_id, bookings.created_at` - Driver history
+- `bookings.assignment_type` - Dispatch method filtering
 - `driver_locations.driver_id, driver_locations.timestamp` - Real-time tracking
+- `drivers.status` - Active driver queries
 - `drivers.current_location` - Spatial index for nearby driver queries
-- `payments.stripe_payment_intent_id` - Webhook processing
-- `support_tickets.user_id, support_tickets.status` - User support queries
+- `pricing_configuration.is_active` - Current pricing lookup
+- `ratings.driver_id, ratings.created_at` - Driver rating calculations
 
 #### Geospatial Indexes (PostGIS)
 - `bookings.pickup_location` - Pickup location queries
@@ -477,9 +511,13 @@ type Driver {
   user: User!
   status: DriverStatus!
   vehiclePlate: String!
+  idPhotoUrl: String
+  bankInfo: JSON
   currentLocation: Location
   ratingAverage: Float
   totalJobs: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type Booking {
@@ -492,14 +530,43 @@ type Booking {
   dropoffAddress: String!
   parcelSize: ParcelSize!
   status: BookingStatus!
+  assignmentType: AssignmentType!
   fareAmount: Float!
+  driverAmount: Float!
+  commissionAmount: Float!
+  taxAmount: Float!
   estimatedDistanceKm: Float!
   estimatedDurationMinutes: Int!
   pickupEta: DateTime
   deliveryEta: DateTime
   cancellationReason: String
   createdAt: DateTime!
+  assignedAt: DateTime
+  pickedUpAt: DateTime
+  deliveredAt: DateTime
   completedAt: DateTime
+}
+
+type FareEstimate {
+  fareAmount: Float!
+  driverAmount: Float!
+  commissionAmount: Float!
+  taxAmount: Float!
+  estimatedDistanceKm: Float!
+  estimatedDurationMinutes: Int!
+  currency: String!
+}
+
+type PricingConfiguration {
+  id: ID!
+  baseFare: Float!
+  perKmRate: Float!
+  commissionPercentage: Float!
+  taxPercentage: Float!
+  currency: String!
+  isActive: Boolean!
+  createdAt: DateTime!
+  createdBy: User!
 }
 
 type Location {
@@ -517,6 +584,11 @@ type Rating {
   createdAt: DateTime!
 }
 
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
 enum UserRole {
   CUSTOMER
   DRIVER
@@ -528,6 +600,7 @@ enum AuthProvider {
 }
 
 enum DriverStatus {
+  PENDING
   ACTIVE
   SUSPENDED
 }
@@ -536,9 +609,15 @@ enum BookingStatus {
   PENDING
   ASSIGNED
   PICKED_UP
+  IN_TRANSIT
   DELIVERED
   COMPLETED
   CANCELLED
+}
+
+enum AssignmentType {
+  AUTO_DISPATCH
+  MANUAL_ASSIGNMENT
 }
 
 enum ParcelSize {
@@ -546,6 +625,9 @@ enum ParcelSize {
   MEDIUM
   LARGE
 }
+
+scalar DateTime
+scalar JSON
 ```
 
 #### Queries
@@ -556,16 +638,20 @@ type Query {
   
   # Bookings
   booking(id: ID!): Booking
-  myBookings: [Booking!]!
+  myBookings(limit: Int, offset: Int): [Booking!]!
   fareEstimate(input: FareEstimateInput!): FareEstimate!
   
   # Driver
   availableJobs: [Booking!]!
+  myActiveJob: Booking
   driverLocation(driverId: ID!): Location
   
   # Operator
-  allBookings(search: String): [Booking!]!
-  allDrivers: [Driver!]!
+  allBookings(search: String, status: BookingStatus, limit: Int, offset: Int): [Booking!]!
+  allDrivers(status: DriverStatus): [Driver!]!
+  activePricingConfiguration: PricingConfiguration
+  bookingsByDriver(driverId: ID!, limit: Int, offset: Int): [Booking!]!
+  bookingsByCustomer(customerId: ID!, limit: Int, offset: Int): [Booking!]!
 }
 ```
 
@@ -580,7 +666,7 @@ type Mutation {
   cancelBooking(id: ID!, reason: String!): Booking!
   
   # Driver
-  acceptJob(bookingId: ID!): Booking!
+  acceptJob(bookingId: ID!, eta: Int): Booking!
   updateJobStatus(bookingId: ID!, status: BookingStatus!): Booking!
   updateDriverLocation(location: LocationInput!): Driver!
   
@@ -590,6 +676,8 @@ type Mutation {
   # Operator
   createDriver(input: CreateDriverInput!): Driver!
   updateDriverStatus(driverId: ID!, status: DriverStatus!): Driver!
+  assignJobToDriver(bookingId: ID!, driverId: ID!): Booking!
+  updatePricingConfiguration(input: PricingConfigurationInput!): PricingConfiguration!
 }
 ```
 
@@ -606,6 +694,7 @@ input CreateBookingInput {
   dropoffLocation: LocationInput!
   dropoffAddress: String!
   parcelSize: ParcelSize!
+  assignmentType: AssignmentType = AUTO_DISPATCH
 }
 
 input LocationInput {
@@ -629,10 +718,35 @@ input CreateDriverInput {
   name: String!
   email: String!
   vehiclePlate: String!
+  idPhotoUrl: String
+  bankInfo: JSON
+}
+
+input PricingConfigurationInput {
+  baseFare: Float!
+  perKmRate: Float!
+  commissionPercentage: Float!
+  taxPercentage: Float!
+  currency: String!
 }
 ```
 
 ### Example Queries
+
+#### Get Fare Estimate
+```graphql
+query FareEstimate($input: FareEstimateInput!) {
+  fareEstimate(input: $input) {
+    fareAmount
+    driverAmount
+    commissionAmount
+    taxAmount
+    estimatedDistanceKm
+    estimatedDurationMinutes
+    currency
+  }
+}
+```
 
 #### Create Booking
 ```graphql
@@ -640,14 +754,32 @@ mutation CreateBooking($input: CreateBookingInput!) {
   createBooking(input: $input) {
     id
     status
+    assignmentType
     fareAmount
+    driverAmount
     pickupEta
     deliveryEta
   }
 }
 ```
 
-#### Get Available Jobs
+#### Accept Job (Driver)
+```graphql
+mutation AcceptJob($bookingId: ID!, $eta: Int) {
+  acceptJob(bookingId: $bookingId, eta: $eta) {
+    id
+    status
+    pickupEta
+    driver {
+      user {
+        name
+      }
+    }
+  }
+}
+```
+
+#### Get Available Jobs (Driver)
 ```graphql
 query AvailableJobs {
   availableJobs {
@@ -655,8 +787,21 @@ query AvailableJobs {
     pickupAddress
     dropoffAddress
     fareAmount
+    driverAmount
     estimatedDistanceKm
     estimatedDurationMinutes
+    parcelSize
+  }
+}
+```
+
+#### Cancel Booking with Reason
+```graphql
+mutation CancelBooking($id: ID!, $reason: String!) {
+  cancelBooking(id: $id, reason: $reason) {
+    id
+    status
+    cancellationReason
   }
 }
 ```
@@ -668,6 +813,46 @@ mutation SubmitRating($input: RatingInput!) {
     id
     rating
     comment
+    driver {
+      ratingAverage
+    }
+  }
+}
+```
+
+#### Operator: Create Driver
+```graphql
+mutation CreateDriver($input: CreateDriverInput!) {
+  createDriver(input: $input) {
+    id
+    status
+    user {
+      name
+      email
+    }
+    vehiclePlate
+  }
+}
+```
+
+#### Operator: Search Bookings
+```graphql
+query AllBookings($search: String, $status: BookingStatus) {
+  allBookings(search: $search, status: $status) {
+    id
+    status
+    customer {
+      name
+      email
+    }
+    driver {
+      user {
+        name
+      }
+      vehiclePlate
+    }
+    fareAmount
+    createdAt
   }
 }
 ```
