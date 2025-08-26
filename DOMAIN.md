@@ -1,12 +1,12 @@
 ## Parcel.AI Domain
 
-**Parcel.ai** is an on-demand parcel delivery platform that connects customers who need items delivered with nearby drivers. The platform provides real-time tracking, secure payments, and a seamless experience across mobile and web interfaces.
+**Parcel.ai** is an on-demand parcel delivery platform that connects customers who need items delivered with nearby drivers. The platform provides real-time tracking, and a seamless experience across mobile and web interfaces.
 
 ### Key Features
-- **Social Sign-In:** Quick OAuth authentication with Google/Apple
+- **Social Sign-In:** Quick OAuth authentication with Google
 - **Instant Booking:** Customers can book deliveries with fare estimates
-- **Simple Dispatch:** Auto-assign jobs to nearest available driver
-- **Live Tracking:** Real-time location updates and ETA calculations
+- **Simple Dispatch:** Assigns jobs to specific or nearest available driver
+- **Live Tracking:** Real-time location updates
 - **Multi-role Platform:** Single mobile app serving customers and drivers, web interface for operators
 - **Rating System:** Post-delivery driver rating for quality assurance
 - **Booking Management:** Cancel bookings with reason tracking
@@ -19,11 +19,11 @@
 ### US-01: Social Sign-In
 
 **As a** new user  
-**I want to** sign up or log in with Google or Apple  
+**I want to** sign up or log in with Google
 **So that** I can start booking without creating a password
 
 **Acceptance Criteria:**
-- Sign-in with Google/Apple button is visible on the welcome screen
+- Sign-in with Google button is visible on the welcome screen
 - Upon successful OAuth, the user lands on the Home screen already authenticated
 - If OAuth fails, an error message explains the issue
 
@@ -50,7 +50,7 @@
 - A confirmation pop-up asks the customer to confirm the cancellation
 - After confirmation:
   - The job is marked Cancelled and the customer's card is not charged
-  - The assigned driver (if any) and the support team receive a notification that the job was cancelled
+  - The assigned driver (if any) is informed that the job was cancelled
   - The booking now appears in the customer's history with the label Cancelled and the chosen reason visible
 
 ### US-08: Mobile-Optimized Field Operations
@@ -63,8 +63,9 @@
 - Responsive design optimized for mobile screens
 - Touch-friendly buttons and forms
 - Fast loading performance for field use
+- Be able to update job status such as when it's started, and completed
 
-### US-09: Receive & Accept Job (Auto-Assign)
+### US-09: Receive & Accept Job
 
 **As a** driver  
 **I want to** receive nearby job offers with payout info and accept the one I want  
@@ -73,7 +74,9 @@
 **Acceptance Criteria:**
 - Push notification arrives within 2s of dispatch
 - Job card shows pickup, drop-off, payout
-- System can auto-assign to nearest available driver or use first-acceptor-wins model
+- System supports both operator manual assignment to specific driver or auto-dispatch to nearest available drivers
+- For auto-dispatched jobs: First-acceptor-wins model where the driver can key in their ETA
+- For manually assigned jobs: Driver receives direct assignment notification
 
 ### US-11: Real-Time Tracking & Live Map with ETA
 
@@ -82,11 +85,8 @@
 **So that** I know when to expect pickup and delivery
 
 **Acceptance Criteria:**
-- Initial ETA calculated when driver accepts the job
+- Driver's ETA is shown
 - Map updates every 15 seconds with driver's live location
-- ETA recalculates dynamically every few seconds as driver moves
-- Visual progress indicators showing completion percentage
-- User can share a read-only tracking link
 
 ### US-16: Rating Flow
 
@@ -114,7 +114,7 @@
 ## Business Rules & Logic
 
 ### Pricing Calculation
-- **Base Calculation:** Base fare + (distance × per-km rate) + (duration × per-minute rate) = Driver Base Amount
+- **Base Calculation:** Base fare + (distance × per-km rate) = Driver Base Amount
 - **Commission:** Platform commission = Driver Base Amount × commission %
 - **Tax:** GST/VAT = (Driver Base Amount + Commission) × tax %
 - **Customer Fare:** Driver Base Amount + Commission + Tax
@@ -122,65 +122,44 @@
 - **Platform Keeps:** Commission + Tax
 - **Fare Display:** System must display customer fare ≤ 3 seconds after route details completed
 - **Currency:** System uses single currency per deployment, typically configured during initial setup and rarely changed
-- **Rate Configuration:** Only operators can modify commission %, tax %, base fare, per-km, per-minute rates, and system currency
+- **Rate Configuration:** Only operators can modify commission %, tax %, base fare, per-km rates, and system currency
 - **Rate Application:** Changes apply only to new bookings created after the update
 
 **Example Calculation (USD):**
-- Base fare: $5.00
-- Distance: 3 km × $1.50/km = $4.50
-- Duration: 10 minutes × $0.25/minute = $2.50
-- **Driver Base Amount:** $5.00 + $4.50 + $2.50 = $12.00
-- **Commission (20%):** $12.00 × 0.20 = $2.40
-- **Subtotal:** $12.00 + $2.40 = $14.40
-- **Tax (10%):** $14.40 × 0.10 = $1.44
-- **Customer Pays:** $14.40 + $1.44 = $15.84
-- **Driver Receives:** $12.00
-- **Platform Keeps:** $2.40 + $1.44 = $3.84
+- **Base fare:** $5.00
+- **Distance:** 3 km × $1.50/km = $4.50
+- **Driver Base Amount:** $5.00 + $4.50 = $9.50
+- **Commission (20%):** $9.50 × 0.20 = $1.90
+- **Tax (10%):** $11.40 × 0.10 = $1.14
+- **Subtotal:** $9.50 + $1.90 = $11.40
+- **Customer Pays:** $11.40 + $1.14 = $12.54
+- **Driver Receives:** $9.50
+- **Platform Keeps:** $1.90 + $1.14 = $3.04
 
 ### Driver Management
-- **Invitation Only:** Drivers can only join via operator-generated unique invite links
-- **Invite Link Distribution:** System generates invite links; operators manually send them via external email or SMS to prospective drivers
-- **Link Expiration:** Invite links expire after configurable time (default: 7 days)
-- **Signup Completion:** Incomplete signup blocks job acceptance
+- **Registration Process:** Operators register drivers through the operator portal with required documentation
 - **Required Fields:** Name, ID photo, vehicle plate, bank info
 - **Status Management:** pending → active ⟷ suspended (operators can directly reactivate suspended drivers)
 - **Eligibility:** Only active drivers with complete signup receive job offers
 
 ### Job Dispatch Logic
-- **First-Acceptor-Wins:** First driver to tap "Accept" gets the job
-- **Proximity-Based:** Nearest eligible drivers receive jobs first
-- **Expanding Radius:** Radius expands at configurable intervals (default: every 30 seconds) until timeout
-- **Rating Bias:** Light preference for higher-rated drivers when distance is similar (small effect to maintain fairness for new drivers)
-- **Timeout Handling:** Jobs withdrawn if unclaimed after timeout period (default: 5 minutes, operator configurable)
+- **Manual Assignment:** System operators can directly assign jobs to specific drivers through operator portal
+- **Auto-Dispatch Mode:** Proximity-based dispatch where nearest eligible drivers receive jobs first based on current location proximity to pickup point
+- **First-Acceptor-Wins:** First driver to tap "Accept" gets the job (applies to auto-dispatched jobs only)
+- **Direct Assignment:** Job assigned to specific driver (no acceptance required, driver notified of assignment)
+- **Broadcast Assignment:** Job offered to multiple nearby drivers based on proximity with first-acceptor-wins logic
+- **Timeout Handling:** Auto-dispatched jobs withdrawn if unclaimed after timeout period (default: 5 minutes, operator configurable)
+- **Location Tracking:** System uses real-time driver locations to calculate proximity for optimal dispatch
 - **Notification Speed:** Push notifications must arrive within 2 seconds of dispatch
 
 ### Booking Lifecycle
 - **Status Flow:** pending → assigned → picked_up → in_transit → delivered → completed
 - **Cancellation Window:** Available while job status is "pending" or "assigned"
-- **Photo Requirements:** Pickup photo required before status can progress from "picked_up" to "in_transit"; delivery photo required before status can progress from "in_transit" to "delivered"
-- **Photo Visibility:** Photos accessible in booking details for customers and operators
-- **Payment Authorization:** Hold placed on payment method when booking status changes from "pending" to "assigned"
-- **Payment Capture:** Triggered when status changes to "delivered", then status changes to "completed" upon successful capture
 
-### Cancellation & Refund Policy
-- **Customer Cancellation:** Available while job is "pending" or "assigned", requires reason selection
-- **No Charge Policy:** Cancelled bookings don't charge customer's payment method
-- **Driver Notification:** Assigned driver and support team notified of cancellations
-- **History Tracking:** Cancelled bookings appear in history with reason visible
-
-### Payment Processing
-- **Authorization Timing:** When booking status changes from "pending" to "assigned" (not during booking creation)
-- **Capture Timing:** When booking status changes to "delivered"
-- **Status Progression:** delivered → (payment capture) → completed
-- **Failure Handling:** Failed captures mark booking as "payment failed" with retry option
-- **Receipt Generation:** Email & in-app receipt sent within 1 minute of successful capture
-- **Driver Payouts:** Daily aggregation at midnight local timezone with T+1 payout schedule (business days only)
-- **Commission Structure:** Platform deducts commission and tax from customer payment; driver receives the base calculation (base fare + distance + time costs)
 
 ### Real-time Tracking
 - **Initial ETA:** Calculated when driver accepts job based on current location and route
 - **Update Method:** Manual refresh to get latest driver location and ETA
-- **Sharing:** Users can share booking ID for tracking
 
 ### Rating System
 - **Rating Window:** 1-5 star modal appears after job completion
@@ -188,23 +167,14 @@
 - **Finality:** Ratings cannot be edited after submission
 - **Driver Impact:** Ratings provide light preference in dispatch when drivers are at similar distances (small effect to maintain fairness for all drivers)
 
-
-
 ### Operator Controls
 - **Search Capabilities:** Search by booking ID, customer name, or driver name
-- **Driver Management:** Real-time status toggle between active/suspended (no need to return to pending) reflects immediately in app
-- **Rate Configuration:** Full control over pricing parameters and system currency with validation (currency changes not recommended post-deployment)
-- **Invite Management:** Control driver onboarding through invitation system
+- **Driver Management:** Register drivers through operator portal, real-time status toggle between active/suspended (no need to return to pending) reflects immediately in app
+- **Rate Configuration:** Full control over pricing parameters (base fare, per-km rates, commission %, tax %) and system currency with validation (currency changes not recommended post-deployment)
+- **Job Dispatch:** Manual assignment to specific drivers or auto-dispatch to nearest available drivers based on current location proximity
 
-### History & Receipt Management
+### Booking History
 - **Booking History:** Paginated list of past bookings with detail view access
-- **Receipt Generation:** PDF receipts available for download from booking history
-- **Data Retention:** Historical data maintained for regulatory and user access requirements
-- **Receipt Timing:** Receipts generated within 1 minute of payment capture
-
-
-
-
 
 ---
 
@@ -244,13 +214,13 @@
 
 ### Backend Responsibilities (Ruby on Rails + GraphQL)
 - **GraphQL API:** Single endpoint for all client operations
-- **Authentication:** JWT-based auth with Google/Apple OAuth integration
+- **Authentication:** JWT-based auth with Google OAuth integration
 - **Business Logic:** Booking lifecycle, simple dispatch algorithm
 - **Database Operations:** ActiveRecord with PostgreSQL and PostGIS
 - **Background Jobs:** Sidekiq for async processing
 
 ### Third-party Integrations (Development Mode)
-- **Authentication:** Google Sign-In, Apple Sign-In (development credentials)
+- **Authentication:** Google Sign-In (development credentials)
 - **Maps & Geolocation:** Google Maps Platform (development API key)
 - **Push Notifications:** Expo Push Notifications (development tokens)
 
@@ -278,7 +248,7 @@
 **App Structure:**
 ```
 ├── Mobile App (Expo React Native)
-│   ├── Authentication (Google/Apple OAuth)
+│   ├── Authentication (Google OAuth)
 │   ├── Customer Interface
 │   │   ├── Booking creation with fare estimate
 │   │   ├── Live tracking and ETA
@@ -368,7 +338,7 @@
   "email": "string",
   "name": "string",
   "role": "customer | driver | operator",
-  "auth_provider": "google | apple",
+  "auth_provider": "google",
   "auth_provider_id": "string",
   "profile_image_url": "string",
   "created_at": "timestamp",
@@ -555,7 +525,6 @@ enum UserRole {
 
 enum AuthProvider {
   GOOGLE
-  APPLE
 }
 
 enum DriverStatus {
