@@ -1,22 +1,4 @@
-# Parcel.ai
-
----
-
-## Rules for Amazon Q Agents
-- **Precedence:** **Business Rules** override **User Stories**; **User Stories** override **Examples**.
-  - If you see a conflict, follow that order and cite the section you used.
-
-- **Unit tests are mandatory:** For every code change you propose, include unit tests that cover:
-  - happy path, key edge cases, and error handling
-  - auth/permission checks (if relevant)
-  - state/status transitions (if relevant)
-
-- **Development-only scope:** All outputs are for **development/demo**, not production.
-  - Prefer sandbox endpoints; **never** hit live services or real charges.
-
----
-
-## Project Overview
+## Parcel.AI Domain
 
 **Parcel.ai** is an on-demand parcel delivery platform that connects customers who need items delivered with nearby drivers. The platform provides real-time tracking, secure payments, and a seamless experience across mobile and web interfaces.
 
