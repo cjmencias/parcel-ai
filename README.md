@@ -4,8 +4,13 @@ An on-demand parcel delivery platform connecting customers with nearby drivers f
 
 ## Project Structure
 
-### Core Files
-- **`.amazonq/rules/general-rules.md`** - Amazon Q AI assistant rules for consistent code generation and project standards
-- **`DOMAIN.md`** - Complete project specification including user stories, business rules, API specs, and technical architecture
-- **`README.md`** - Project overview and file structure documentation, getting started
-
+### Directory Structure
+```
+parcel-ai/
+├── .amazonq/     # AI assistant rules
+├── api/          # Ruby on Rails + GraphQL backend
+├── mobile/       # Expo React Native app
+├── web/          # Vite React dashboard
+├── DOMAIN.md     # Complete project specification including user stories, business rules, entity models, API specs, and technical architecture
+└── README.md     # Project overview and file structure documentation, getting started
+```
