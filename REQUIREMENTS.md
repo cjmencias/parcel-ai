@@ -182,7 +182,7 @@
 
 ### API Backend
 - **Ruby on Rails** with **GraphQL** for flexible, efficient API queries
-- **PostgreSQL** with **PostGIS extension** for geospatial queries (delivery radius, driver proximity)
+- **SQLite3** for local development and testing (lightweight, file-based database)
 - **ActionCable** for real-time communication: live tracking, push notifications, and job dispatch updates
 
 ### Web Frontend
@@ -216,7 +216,7 @@
 - **GraphQL API:** Single endpoint for all client operations
 - **Authentication:** JWT-based auth with Google OAuth integration
 - **Business Logic:** Booking lifecycle, simple dispatch algorithm
-- **Database Operations:** ActiveRecord with PostgreSQL and PostGIS
+- **Database Operations:** ActiveRecord with SQLite3
 - **Background Jobs:** Sidekiq for async processing
 
 ### Third-party Integrations (Development Mode)
@@ -226,7 +226,7 @@
 
 ### Database Schema Overview
 - **Core Entities:** Users, Drivers, Bookings, Ratings
-- **Geospatial Data:** Driver locations, pickup/dropoff coordinates using PostGIS
+- **Geospatial Data:** Driver locations, pickup/dropoff coordinates (stored as latitude/longitude pairs)
 - **Status Management:** Booking states, driver states
 - **Simple Tracking:** Basic location history for ETA calculations
 
@@ -353,8 +353,9 @@
   "status": "pending | active | suspended",
   "vehicle_plate": "string",
   "id_photo_url": "string",
-  "bank_info": "jsonb",
-  "current_location": "point (PostGIS)",
+  "bank_info": "text (JSON string)",
+  "current_lat": "decimal(10,8)",
+  "current_lng": "decimal(11,8)",
   "rating_average": "decimal(2,1)",
   "total_jobs": "integer",
   "created_at": "timestamp",
@@ -368,9 +369,11 @@
   "id": "uuid",
   "customer_id": "uuid (FK to users.id)",
   "driver_id": "uuid (FK to users.id, nullable)",
-  "pickup_location": "point (PostGIS)",
+  "pickup_lat": "decimal(10,8)",
+  "pickup_lng": "decimal(11,8)",
   "pickup_address": "string",
-  "dropoff_location": "point (PostGIS)",
+  "dropoff_lat": "decimal(10,8)",
+  "dropoff_lng": "decimal(11,8)",
   "dropoff_address": "string",
   "parcel_size": "small | medium | large",
   "status": "pending | assigned | picked_up | in_transit | delivered | completed | cancelled",
@@ -413,7 +416,8 @@
   "id": "uuid",
   "driver_id": "uuid (FK to users.id)",
   "booking_id": "uuid (FK to bookings.id, nullable)",
-  "location": "point (PostGIS)",
+  "lat": "decimal(10,8)",
+  "lng": "decimal(11,8)",
   "timestamp": "timestamp"
 }
 ```
@@ -477,11 +481,10 @@ manual_assignment: Direct assignment to specific driver
 - `pricing_configuration.is_active` - Current pricing lookup
 - `ratings.driver_id, ratings.created_at` - Driver rating calculations
 
-#### Geospatial Indexes (PostGIS)
-- `bookings.pickup_location` - Pickup location queries
-- `bookings.dropoff_location` - Delivery location queries
-- `drivers.current_location` - Driver proximity searches
-- `driver_locations.location` - Historical location tracking
+#### Geospatial Considerations
+- Location data stored as separate latitude/longitude columns for SQLite compatibility
+- Distance calculations using Haversine formula for driver proximity
+- Simple coordinate-based queries for location filtering
 
 ---
 
