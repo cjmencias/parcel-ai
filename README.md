@@ -2,9 +2,9 @@
 
 An on-demand parcel delivery platform connecting customers with nearby drivers for real-time package delivery.
 
-## Project Structure
 
-### Directory Structure
+## Directory Structure
+
 ```
 parcel-ai/
 ├── .amazonq/     # AI assistant rules
